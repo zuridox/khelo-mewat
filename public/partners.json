@@ -1,0 +1,34 @@
+[
+    {
+        "id":1,
+        "src":"/partners/nike.svg"
+    },
+    {
+        "id":2,
+        "src":"/partners/att.svg"
+    },
+    {
+        "id":3,
+        "src":"/partners/emirates.svg"
+    },
+    {
+        "id":4,
+        "src":"/partners/mrf.svg"
+    },
+    {
+        "id":5,
+        "src":"/partners/redbull.svg"
+    },
+    {
+        "id":6,
+        "src":"/partners/suprem.svg"
+    },
+    {
+        "id":7,
+        "src":"/partners/adidas.png"
+    },
+    {
+        "id":8,
+        "src":"/partners/wilson.svg"
+    }
+]

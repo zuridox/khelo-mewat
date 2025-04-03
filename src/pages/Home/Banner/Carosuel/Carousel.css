@@ -1,0 +1,23 @@
+.swiper-slide{
+    width: 15rem;
+    height: 23rem;
+    position: relative;
+}
+.swiper-slide img{
+    width: 15rem;
+    height: 23rem;
+    object-fit: cover;
+    transition: transform 0.8s ease, opacity 0.8s ease ;
+    border: 5px solid #fff;
+    border-radius: 10px;
+}
+@media only screen and(max-width:500px){
+    .swiper-slide{
+        width: 9rem !important;
+        height: 17rem !important;
+    }
+    .swiper-slide img{
+        width: 9rem !important;
+        height: 17rem !important;
+    }
+}

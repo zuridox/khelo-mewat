@@ -1,0 +1,38 @@
+[
+  {
+    "id": "Football",
+    "des": "Our football coach brings a wealth of experience to the field, emphasizing teamwork, agility, and tactical play. Whether it's refining individual skills or orchestrating cohesive team strategies, our football coach is committed to instilling a passion for the beautiful game."
+  },
+  {
+    "id": "Cricket",
+    "des": "He is a seasoned professional with a deep understanding of the nuances of the game. With a focus on technical skill development, strategic play, and fostering a love for the sport, our cricket coach is dedicated to nurturing the next generation of cricket stars."
+  },
+  {
+    "id": "Tennis",
+    "des": "Precision and finesse define our tennis coach's approach to the sport. From mastering powerful serves to perfecting backhands, our coach guides players through every aspect of tennis, fostering a competitive spirit and a love for the court."
+  },
+  {
+    "id": "Basketball ",
+    "des": "Dribble, shoot, score! Our basketball coach combines technical expertise with a passion for the game. With a focus on skill development, teamwork, and strategic play, our coach inspires players to reach new heights on the basketball court."
+  },
+  {
+    "id": "Volleyball ",
+    "des": "Spike, set, and serve! Our volleyball coach brings enthusiasm and expertise to the court. From refining fundamental skills to developing advanced strategies, our coach empowers players to excel in the fast-paced and dynamic world of volleyball."
+  },
+  {
+    "id": "Badminton",
+    "des": "Speed and precision are at the core of our badminton coach's training philosophy. With a keen eye for technique and a dedication to player development, our coach guides aspiring badminton players to reach their full potential on the court."
+  },
+  {
+    "id": "Swimming ",
+    "des": "Dive into excellence with our swimming coach! Our coach focuses on stroke refinement, endurance training, and water safety. Whether it's perfecting the butterfly or building stamina, our swimming coach is committed to helping athletes make a splash."
+  },
+  {
+    "id": "Baseball ",
+    "des": "Step up to the plate with our baseball coach! Emphasizing fundamental skills, strategic play, and a love for the game, our coach guides baseball enthusiasts through every aspect of this iconic sport."
+  },
+  {
+    "id": "Rugby ",
+    "des": "Tackle challenges head-on with our rugby coach! From honing tackling techniques to building teamwork on the field, our coach instills the principles of strength, strategy, and sportsmanship in aspiring rugby players."
+  }
+]

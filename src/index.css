@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .nav_item {
+    @apply hover:border-b-[2px] hover:border-amber-500;
+  }
+  .toggle_class {
+    @apply text-sm font-medium flex items-center gap-2 px-3 md:pl-3 md:pr-3.5 py-1 md:py-1.5 transition-colors relative z-10;
+  }
+  .navbar_bg {
+    @apply bg-white dark:bg-gray-800 shadow-md;
+    /* @apply backdrop-blur-lg backdrop-saturate-150 dark:bg-gray-800 shadow-md ; */
+  }
+  .custom-btn {
+    @apply transition-all duration-200 hover:scale-95 hover:bg-amber-500 hover:border-amber-500 border-amber-500;
+  }
+  .sidebar {
+    @apply flex items-center px-4 py-2 mt-3  transition-colors duration-300 transform  hover:bg-amber-500   hover:text-white;
+  }
+  .sidebar-active {
+    @apply bg-gray-300  text-gray-700 dark:text-amber-500 dark:hover:text-white;
+  }
+  .facilities_card_img {
+    @apply block h-full w-full object-cover object-center shadow-lg transition-transform transform scale-100 group-hover:scale-105 duration-300;
+  }
+  .facilities_card_overlay {
+    @apply absolute inset-0 bg-gradient-to-t from-black to-transparent;
+  }
+  .add-class-input-field {
+    @apply bg-gray-50 border border-amber-500 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 focus:outline-none dark:placeholder-gray-400 dark:text-white;
+  }
+  .add-class-label {
+    @apply block mb-2 text-sm font-medium text-gray-800 dark:text-white;
+  }
+  .card_effect {
+    @apply transform transition-all ease-in duration-300;
+  } 
+  .p_des {
+    @apply font-medium;
+  }
+  .span_label {
+    @apply font-semibold text-amber-500 dark:text-white text-base;
+  }
+  .input_field{
+    @apply w-full px-3 py-2 border rounded-md border-amber-500 focus:outline-none bg-gray-50 text-gray-900;
+  }
+
+  /* for error page */
+  @keyframes bounce {
+    33% {
+      transform: translateY(0);
+    }
+    66% {
+      transform: translateY(-10px); /* Decrease the range of upward movement */
+    }
+    100% {
+      transform: translateY(0); /* Decrease the range of downward movement */
+    }
+  }
+  .bounceAni {
+    animation: bounce 2s ease-in-out infinite;
+  }
+}
