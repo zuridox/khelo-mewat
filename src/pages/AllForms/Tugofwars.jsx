@@ -353,7 +353,7 @@ const blockVillageData = {
 const Tugofwars = () => {
   const [formData, setFormData] = useState({
     teamName: "",
-    playerName: "",
+    players: [], // NEW: Changed from playerName to array for multiple players
     numPlayers: 1,
     fatherName: "",
     gender: "",
@@ -366,6 +366,15 @@ const Tugofwars = () => {
     entryForm: null,
     sarpanchPerforma: null,
   });
+
+  // NEW: Added state for new player subform
+  const [newPlayer, setNewPlayer] = useState({
+    playerName: "",
+    fatherName: "",
+    mobile: "",
+    aadhaar: "",
+  });
+
   const [villages, setVillages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -396,6 +405,55 @@ const Tugofwars = () => {
     } else {
       setFormData({ ...formData, [name]: value });
     }
+  };
+
+  // NEW: Added handler for player subform inputs
+  const handlePlayerInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "aadhaar") {
+      const aadhaarValue = value.replace(/\D/g, "").slice(0, 12);
+      setNewPlayer({ ...newPlayer, [name]: aadhaarValue });
+    } else if (name === "mobile") {
+      const mobileValue = value.replace(/\D/g, "").slice(0, 10);
+      setNewPlayer({ ...newPlayer, [name]: mobileValue });
+    } else {
+      setNewPlayer({ ...newPlayer, [name]: value });
+    }
+  };
+
+  // NEW: Added function to add player to the list
+  const addPlayer = () => {
+    if (
+      newPlayer.playerName &&
+      newPlayer.fatherName &&
+      newPlayer.mobile &&
+      newPlayer.aadhaar
+    ) {
+      setFormData({
+        ...formData,
+        players: [...formData.players, { ...newPlayer }],
+        numPlayers: formData.players.length + 1,
+      });
+      setNewPlayer({
+        playerName: "",
+        fatherName: "",
+        mobile: "",
+        aadhaar: "",
+      });
+      setError(null);
+    } else {
+      setError("Please fill all player details before adding");
+    }
+  };
+
+  // NEW: Added function to remove player from the list
+  const removePlayer = (index) => {
+    const updatedPlayers = formData.players.filter((_, i) => i !== index);
+    setFormData({
+      ...formData,
+      players: updatedPlayers,
+      numPlayers: updatedPlayers.length,
+    });
   };
 
   const handleBlockChange = (e) => {
@@ -446,6 +504,9 @@ const Tugofwars = () => {
       if (!formData.entryForm || !formData.sarpanchPerforma) {
         throw new Error("Please upload a form below 300KB");
       }
+      if (formData.players.length === 0) {
+        throw new Error("Please add at least one player");
+      }
 
       // Upload files to Cloudinary
       const entryFormUrl = await uploadToCloudinary(
@@ -460,7 +521,7 @@ const Tugofwars = () => {
       // Prepare data for Firebase
       const registrationData = {
         teamName: formData.teamName,
-        playerName: formData.playerName,
+        players: formData.players, // NEW: Added players array
         numPlayers: formData.numPlayers,
         fatherName: formData.fatherName,
         gender: formData.gender,
@@ -485,7 +546,7 @@ const Tugofwars = () => {
       setSuccess(true);
       setFormData({
         teamName: "",
-        playerName: "",
+        players: [], // NEW: Reset to empty array
         numPlayers: 1,
         fatherName: "",
         gender: "",
@@ -572,20 +633,100 @@ const Tugofwars = () => {
                 />
               </div>
 
+              {/* CHANGED: Replaced single player input with players list and subform */}
               <div className="mb-4">
-                <label className="block text-gray-700">Name of Player</label>
-                <input
-                  type="text"
-                  name="playerName"
-                  value={formData.playerName}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg bg-white text-black"
-                  placeholder="Enter Player's Name"
-                  required
-                />
+                <label className="block text-gray-700 font-bold">
+                  Players List ({formData.players.length} added)
+                </label>
+
+                {/* NEW: Added display for added players */}
+                {formData.players.length > 0 && (
+                  <div className="mt-2 mb-4">
+                    {formData.players.map((player, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-2 bg-gray-100 rounded mb-2"
+                      >
+                        <span>
+                          {index + 1}. {player.playerName} (Father:{" "}
+                          {player.fatherName}) (Mobile: {player.mobile})
+                          (Aadhaar:{player.aadhaar})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removePlayer(index)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* NEW: Added subform for new player entry */}
+                <div className="border p-4 rounded-lg">
+                  <div className="mb-2">
+                    <label className="block text-gray-700">Player Name</label>
+                    <input
+                      type="text"
+                      name="playerName"
+                      value={newPlayer.playerName}
+                      onChange={handlePlayerInputChange}
+                      className="w-full p-2 border rounded-lg bg-white text-black"
+                      placeholder="Enter Player's Name"
+                    />
+                  </div>
+
+                  <div className="mb-2">
+                    <label className="block text-gray-700">Father's Name</label>
+                    <input
+                      type="text"
+                      name="fatherName"
+                      value={newPlayer.fatherName}
+                      onChange={handlePlayerInputChange}
+                      className="w-full p-2 border rounded-lg bg-white text-black"
+                      placeholder="Enter Father's Name"
+                    />
+                  </div>
+
+                  <div className="mb-2">
+                    <label className="block text-gray-700">Mobile Number</label>
+                    <input
+                      type="tel"
+                      name="mobile"
+                      value={newPlayer.mobile}
+                      onChange={handlePlayerInputChange}
+                      className="w-full p-2 border rounded-lg bg-white text-black"
+                      placeholder="Enter Mobile Number"
+                    />
+                  </div>
+
+                  <div className="mb-2">
+                    <label className="block text-gray-700">
+                      Aadhaar Number
+                    </label>
+                    <input
+                      type="text"
+                      name="aadhaar"
+                      value={newPlayer.aadhaar}
+                      onChange={handlePlayerInputChange}
+                      className="w-full p-2 border rounded-lg bg-white text-black"
+                      placeholder="Enter Aadhaar Number"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={addPlayer}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                  >
+                    Add Player
+                  </button>
+                </div>
               </div>
 
-              <div className="mb-4">
+              {/* <div className="mb-4">
                 <label className="block text-gray-700">Number of Players</label>
                 <input
                   type="number"
@@ -597,7 +738,7 @@ const Tugofwars = () => {
                   max="15"
                   required
                 />
-              </div>
+              </div> */}
 
               <div className="mb-4">
                 <label className="block text-gray-700">Father's Name</label>
@@ -679,7 +820,7 @@ const Tugofwars = () => {
               )}
 
               <div className="mb-4">
-                <label className="block text-gray-700">Ward No</label>
+                <label className="block text-gray-700">Ward No(Optional)</label>
                 <input
                   type="text"
                   name="wardNo"
@@ -687,7 +828,6 @@ const Tugofwars = () => {
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded-lg bg-white text-black"
                   placeholder="Enter Ward No"
-                  required
                 />
               </div>
 

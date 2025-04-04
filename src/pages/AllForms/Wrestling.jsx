@@ -698,7 +698,7 @@ const Wrestling = () => {
               )}
 
               <div className="mb-4">
-                <label className="block text-gray-700">Ward No</label>
+                <label className="block text-gray-700">Ward No(Optional)</label>
                 <input
                   type="text"
                   name="wardNo"
@@ -706,7 +706,6 @@ const Wrestling = () => {
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded-lg bg-white text-black"
                   placeholder="Enter Ward No"
-                  required
                 />
               </div>
 
