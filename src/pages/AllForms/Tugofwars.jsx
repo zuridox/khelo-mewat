@@ -353,7 +353,7 @@ const blockVillageData = {
 const Tugofwars = () => {
   const [formData, setFormData] = useState({
     teamName: "",
-    players: [], // NEW: Changed from playerName to array for multiple players
+    players: [], 
     numPlayers: 1,
     fatherName: "",
     gender: "",

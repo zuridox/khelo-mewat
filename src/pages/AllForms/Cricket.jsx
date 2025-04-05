@@ -6,6 +6,8 @@ import logo from "../../assets/logo/logom.png";
 import FadeInAnimation from "../../components/FadeInAnimation/FadeInAnimation";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
+import { ref, push, set } from "firebase/database";
+import { db } from "../../firebase/firebaseConfig";
 
 const blockVillageData = {
   Nuh: [
@@ -351,7 +353,7 @@ const blockVillageData = {
 const Cricket = () => {
   const [formData, setFormData] = useState({
     teamName: "",
-    players: [], // NEW: Changed from playerName to array for multiple players
+    players: [],
     numPlayers: 1,
     fatherName: "",
     gender: "",
@@ -365,7 +367,6 @@ const Cricket = () => {
     sarpanchPerforma: null,
   });
 
-  // NEW: Added state for new player subform
   const [newPlayer, setNewPlayer] = useState({
     playerName: "",
     fatherName: "",
@@ -380,7 +381,6 @@ const Cricket = () => {
 
   const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/de3vcuioj/upload";
   const UPLOAD_PRESET = "PDF_Hai";
-  const MAX_FILE_SIZE = 300 * 1024; // 300KB in bytes
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
@@ -393,19 +393,14 @@ const Cricket = () => {
     } else if (files) {
       const file = files[0];
       if (file) {
-        if (file.size > MAX_FILE_SIZE) {
-          setError("Please upload a form below 300KB");
-          return;
-        }
         setFormData({ ...formData, [name]: file });
-        setError(null); // Clear error when a valid file is selected
+        setError(null);
       }
     } else {
       setFormData({ ...formData, [name]: value });
     }
   };
 
-  // NEW: Added handler for player subform inputs
   const handlePlayerInputChange = (e) => {
     const { name, value } = e.target;
     if (name === "aadhaar") {
@@ -419,11 +414,10 @@ const Cricket = () => {
     }
   };
 
-  // NEW: Added function to add player to the list
   const addPlayer = () => {
     if (
       newPlayer.playerName &&
-      newPlayer.fatherName &&
+      newPlayer.fatherName && // Fixed typo: removed "new автоматиPlayer"
       newPlayer.mobile &&
       newPlayer.aadhaar
     ) {
@@ -444,7 +438,6 @@ const Cricket = () => {
     }
   };
 
-  // NEW: Added function to remove player from the list
   const removePlayer = (index) => {
     const updatedPlayers = formData.players.filter((_, i) => i !== index);
     setFormData({
@@ -462,7 +455,7 @@ const Cricket = () => {
 
   const uploadToCloudinary = async (file, fileType) => {
     if (!file) {
-      throw new Error("Please upload a form below 300KB");
+      throw new Error(`Please upload ${fileType}`);
     }
 
     const formData = new FormData();
@@ -498,15 +491,16 @@ const Cricket = () => {
     setSuccess(false);
 
     try {
-      // Validate required files
-      if (!formData.entryForm || !formData.sarpanchPerforma) {
-        throw new Error("Please upload a form below 300KB");
+      if (!formData.teamName) {
+        throw new Error("Team name is required");
       }
       if (formData.players.length === 0) {
         throw new Error("Please add at least one player");
       }
+      if (!formData.entryForm || !formData.sarpanchPerforma) {
+        throw new Error("Please upload both entry form and sarpanch performa");
+      }
 
-      // Upload files to Cloudinary
       const entryFormUrl = await uploadToCloudinary(
         formData.entryForm,
         "Entry Form"
@@ -516,19 +510,18 @@ const Cricket = () => {
         "Sarpanch Performa"
       );
 
-      // Prepare data for Firebase
       const registrationData = {
         teamName: formData.teamName,
-        players: formData.players, // NEW: Added players array
-        numPlayers: formData.numPlayers,
-        fatherName: formData.fatherName,
-        gender: formData.gender,
-        dob: formData.dob,
+        players: formData.players,
+        numPlayers: formData.players.length,
+        captainFatherName: formData.fatherName,
+        captainGender: formData.gender,
+        captainDob: formData.dob,
         block: formData.block,
         village: formData.village,
-        wardNo: formData.wardNo,
-        aadhaar: formData.aadhaar,
-        mobile: formData.mobile,
+        wardNo: formData.wardNo || "",
+        captainAadhaar: formData.aadhaar,
+        captainMobile: formData.mobile,
         entryFormUrl: entryFormUrl,
         sarpanchPerformaUrl: sarpanchPerformaUrl,
         timestamp: new Date().toISOString(),
@@ -538,13 +531,12 @@ const Cricket = () => {
 
       const cricketRef = ref(db, "cricketRegistrations");
       const newRegistrationRef = push(cricketRef);
-
       await set(newRegistrationRef, registrationData);
 
       setSuccess(true);
       setFormData({
         teamName: "",
-        players: [], // NEW: Reset to empty array
+        players: [],
         numPlayers: 1,
         fatherName: "",
         gender: "",
@@ -558,12 +550,22 @@ const Cricket = () => {
         sarpanchPerforma: null,
       });
       setVillages([]);
+      setNewPlayer({
+        playerName: "",
+        fatherName: "",
+        mobile: "",
+        aadhaar: "",
+      });
     } catch (err) {
       setError(err.message);
       console.error("Submission error:", err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleNewRegistration = () => {
+    setSuccess(false);
   };
 
   return (
@@ -601,302 +603,321 @@ const Cricket = () => {
             <p className="text-red-600 text-lg font-bold mt-4">
               Last Date to Apply: 15 April 2025
             </p>
+            <br />
 
-            <br></br>
-
-            {success && (
-              <div className="mb-4 p-2 bg-green-100 text-green-700 rounded">
-                Registration submitted successfully!
+            {success ? (
+              <div className="text-center py-10">
+                <div className="mb-4">
+                  <svg
+                    className="w-16 h-16 text-green-500 mx-auto"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-green-600 mb-2">
+                  Registration Submitted Successfully!
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Your cricket team registration has been successfully
+                  submitted.
+                </p>
+                <button
+                  onClick={handleNewRegistration}
+                  className="bg-[#E87722] text-white px-6 py-2 rounded-lg hover:bg-[#39A935]"
+                >
+                  Register Another Team
+                </button>
               </div>
-            )}
-            {error && (
-              <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block text-gray-700">Team Name</label>
-                <input
-                  type="text"
-                  name="teamName"
-                  value={formData.teamName}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg bg-white text-black"
-                  placeholder="Enter Team Name"
-                  required
-                />
-              </div>
-
-              {/* CHANGED: Replaced single player input with players list and subform */}
-              <div className="mb-4">
-                <label className="block text-gray-700 font-bold">
-                  Players List ({formData.players.length} added)
-                </label>
-
-                {/* NEW: Added display for added players */}
-                {formData.players.length > 0 && (
-                  <div className="mt-2 mb-4">
-                    {formData.players.map((player, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between items-center p-2 bg-gray-100 rounded mb-2"
-                      >
-                        <span>
-                          {index + 1}. {player.playerName} (Father:{" "}
-                          {player.fatherName}) (Mobile: {player.mobile})
-                          (Aadhaar:{player.aadhaar})
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removePlayer(index)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
+            ) : (
+              <>
+                {error && (
+                  <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+                    {error}
                   </div>
                 )}
-
-                {/* NEW: Added subform for new player entry */}
-                <div className="border p-4 rounded-lg">
-                  <div className="mb-2">
-                    <label className="block text-gray-700">Player Name</label>
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-4">
+                    <label className="block text-gray-700">Team Name</label>
                     <input
                       type="text"
-                      name="playerName"
-                      value={newPlayer.playerName}
-                      onChange={handlePlayerInputChange}
+                      name="teamName"
+                      value={formData.teamName}
+                      onChange={handleInputChange}
                       className="w-full p-2 border rounded-lg bg-white text-black"
-                      placeholder="Enter Player's Name"
+                      placeholder="Enter Team Name"
+                      required
                     />
                   </div>
 
-                  <div className="mb-2">
-                    <label className="block text-gray-700">Father's Name</label>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 font-bold">
+                      Players List ({formData.players.length} added)
+                    </label>
+                    {formData.players.length > 0 && (
+                      <div className="mt-2 mb-4">
+                        {formData.players.map((player, index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-center p-2 bg-gray-100 rounded mb-2"
+                          >
+                            <span>
+                              {index + 1}. {player.playerName} (Father:{" "}
+                              {player.fatherName}) (Mobile: {player.mobile})
+                              (Aadhaar:
+                              {player.aadhaar})
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removePlayer(index)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="border p-4 rounded-lg">
+                      <div className="mb-2">
+                        <label className="block text-gray-700">
+                          Player Name
+                        </label>
+                        <input
+                          type="text"
+                          name="playerName"
+                          value={newPlayer.playerName}
+                          onChange={handlePlayerInputChange}
+                          className="w-full p-2 border rounded-lg bg-white text-black"
+                          placeholder="Enter Player's Name"
+                        />
+                      </div>
+                      <div className="mb-2">
+                        <label className="block text-gray-700">
+                          Father's Name
+                        </label>
+                        <input
+                          type="text"
+                          name="fatherName"
+                          value={newPlayer.fatherName}
+                          onChange={handlePlayerInputChange}
+                          className="w-full p-2 border rounded-lg bg-white text-black"
+                          placeholder="Enter Father's Name"
+                        />
+                      </div>
+                      <div className="mb-2">
+                        <label className="block text-gray-700">
+                          Mobile Number
+                        </label>
+                        <input
+                          type="tel"
+                          name="mobile"
+                          value={newPlayer.mobile}
+                          onChange={handlePlayerInputChange}
+                          className="w-full p-2 border rounded-lg bg-white text-black"
+                          placeholder="Enter Mobile Number"
+                        />
+                      </div>
+                      <div className="mb-2">
+                        <label className="block text-gray-700">
+                          Aadhaar Number
+                        </label>
+                        <input
+                          type="text"
+                          name="aadhaar"
+                          value={newPlayer.aadhaar}
+                          onChange={handlePlayerInputChange}
+                          className="w-full p-2 border rounded-lg bg-white text-black"
+                          placeholder="Enter Aadhaar Number"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={addPlayer}
+                        className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                      >
+                        Add Player
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-gray-700">
+                      Captain's Father's Name
+                    </label>
                     <input
                       type="text"
                       name="fatherName"
-                      value={newPlayer.fatherName}
-                      onChange={handlePlayerInputChange}
+                      value={formData.fatherName}
+                      onChange={handleInputChange}
                       className="w-full p-2 border rounded-lg bg-white text-black"
                       placeholder="Enter Father's Name"
+                      required
                     />
                   </div>
 
-                  <div className="mb-2">
-                    <label className="block text-gray-700">Mobile Number</label>
-                    <input
-                      type="tel"
-                      name="mobile"
-                      value={newPlayer.mobile}
-                      onChange={handlePlayerInputChange}
-                      className="w-full p-2 border rounded-lg bg-white text-black"
-                      placeholder="Enter Mobile Number"
-                    />
-                  </div>
-
-                  <div className="mb-2">
+                  <div className="mb-4">
                     <label className="block text-gray-700">
-                      Aadhaar Number
+                      Captain's Gender
+                    </label>
+                    <select
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border rounded-lg bg-white text-black"
+                      required
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-gray-700">
+                      Captain's Date of Birth
+                    </label>
+                    <input
+                      type="date"
+                      name="dob"
+                      value={formData.dob}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border rounded-lg bg-white text-black"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-gray-700">Block</label>
+                    <select
+                      name="block"
+                      value={formData.block}
+                      onChange={handleBlockChange}
+                      className="w-full p-2 border rounded-lg bg-white text-black"
+                      required
+                    >
+                      <option value="">Select Block</option>
+                      {Object.keys(blockVillageData).map((blockName) => (
+                        <option key={blockName} value={blockName}>
+                          {blockName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {formData.block && (
+                    <div className="mb-4">
+                      <label className="block text-gray-700">Village</label>
+                      <select
+                        name="village"
+                        value={formData.village}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded-lg bg-white text-black"
+                        required
+                      >
+                        <option value="">Select Village</option>
+                        {villages.map((villageName) => (
+                          <option key={villageName} value={villageName}>
+                            {villageName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div className="mb-4">
+                    <label className="block text-gray-700">
+                      Ward No (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      name="wardNo"
+                      value={formData.wardNo}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border rounded-lg bg-white text-black"
+                      placeholder="Enter Ward No"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-gray-700">
+                      Captain's Aadhaar Number
                     </label>
                     <input
                       type="text"
                       name="aadhaar"
-                      value={newPlayer.aadhaar}
-                      onChange={handlePlayerInputChange}
+                      value={formData.aadhaar}
+                      onChange={handleInputChange}
                       className="w-full p-2 border rounded-lg bg-white text-black"
                       placeholder="Enter Aadhaar Number"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-gray-700">
+                      Captain's Mobile Number
+                    </label>
+                    <input
+                      type="tel"
+                      name="mobile"
+                      value={formData.mobile}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border rounded-lg bg-white text-black"
+                      placeholder="Enter Mobile Number"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-gray-700 font-medium">
+                      Entry Form (PDF, JPG, JPEG)
+                    </label>
+                    <input
+                      type="file"
+                      name="entryForm"
+                      accept="application/pdf,image/jpeg,image/jpg"
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border rounded-lg text-black"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-gray-700 font-medium">
+                      Sarpanch Performa (PDF, JPG, JPEG)
+                    </label>
+                    <input
+                      type="file"
+                      name="sarpanchPerforma"
+                      accept="application/pdf,image/jpeg,image/jpg"
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border rounded-lg text-black"
+                      required
                     />
                   </div>
 
                   <button
-                    type="button"
-                    onClick={addPlayer}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                    type="submit"
+                    disabled={loading}
+                    className={`bg-[#E87722] text-white px-4 py-2 rounded-lg w-full hover:bg-[#39A935] ${
+                      loading ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                   >
-                    Add Player
+                    {loading ? "Submitting..." : "Submit Application"}
                   </button>
-                </div>
-              </div>
-
-              {/* <div className="mb-4">
-                <label className="block text-gray-700">Number of Players</label>
-                <input
-                  type="number"
-                  name="numPlayers"
-                  value={formData.numPlayers}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg bg-white text-black"
-                  min="1"
-                  max="15"
-                  required
-                />
-              </div> */}
-
-              <div className="mb-4">
-                <label className="block text-gray-700">Father's Name</label>
-                <input
-                  type="text"
-                  name="fatherName"
-                  value={formData.fatherName}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg bg-white text-black"
-                  placeholder="Enter Father's Name"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-gray-700">Gender</label>
-                <select
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg bg-white text-black"
-                  required
-                >
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-gray-700">Date of Birth</label>
-                <input
-                  type="date"
-                  name="dob"
-                  value={formData.dob}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg bg-white text-black"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-gray-700">Block</label>
-                <select
-                  name="block"
-                  value={formData.block}
-                  onChange={handleBlockChange}
-                  className="w-full p-2 border rounded-lg bg-white text-black"
-                  required
-                >
-                  <option value="">Select Block</option>
-                  {Object.keys(blockVillageData).map((blockName) => (
-                    <option key={blockName} value={blockName}>
-                      {blockName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {formData.block && (
-                <div className="mb-4">
-                  <label className="block text-gray-700">Village</label>
-                  <select
-                    name="village"
-                    value={formData.village}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border rounded-lg bg-white text-black"
-                    required
-                  >
-                    <option value="">Select Village</option>
-                    {villages.map((villageName) => (
-                      <option key={villageName} value={villageName}>
-                        {villageName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div className="mb-4">
-                <label className="block text-gray-700">Ward No(Optional)</label>
-                <input
-                  type="text"
-                  name="wardNo"
-                  value={formData.wardNo}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg bg-white text-black"
-                  placeholder="Enter Ward No"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-gray-700">
-                  Captain Aadhaar Number
-                </label>
-                <input
-                  type="text"
-                  name="aadhaar"
-                  value={formData.aadhaar}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg bg-white text-black"
-                  placeholder="Enter Aadhaar Number"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-gray-700">
-                  Captain Mobile Number
-                </label>
-                <input
-                  type="tel"
-                  name="mobile"
-                  value={formData.mobile}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg bg-white text-black"
-                  placeholder="Enter Mobile Number"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Entry Form (PDF, JPG, JPEG)
-                </label>
-                <input
-                  type="file"
-                  name="entryForm"
-                  accept="application/pdf,image/jpeg,image/jpg"
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded-lg text-black"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Sarpanch Performa (PDF, JPG, JPEG)
-                </label>
-                <input
-                  type="file"
-                  name="sarpanchPerforma"
-                  accept="application/pdf,image/jpeg,image/jpg"
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded-lg text-black"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading || error !== null}
-                className={`bg-[#E87722] text-white px-4 py-2 rounded-lg w-full hover:bg-[#39A935] ${
-                  loading || error !== null
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                }`}
-              >
-                {loading ? "Submitting..." : "Submit Application"}
-              </button>
-            </form>
+                </form>
+              </>
+            )}
           </div>
         </FadeInAnimation>
       </Container>

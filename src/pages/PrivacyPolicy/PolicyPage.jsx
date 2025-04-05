@@ -5,7 +5,7 @@ import SectionHeader from "../../components/SectionHeader/SectionHeader";
 import FadeInAnimation from "../../components/FadeInAnimation/FadeInAnimation";
 import { Helmet } from "react-helmet-async";
 
-const PrivacyPolicy = () => {
+const PolicyPage = () => {
   return (
     <div
       className="bg-[#F5F6F5] pb-10 lg:pb-20 md:pt-12 mt-10"
@@ -156,4 +156,4 @@ const PrivacyPolicy = () => {
   );
 };
 
-export default PrivacyPolicy;
+export default PolicyPage;

@@ -37,7 +37,8 @@ import Wrestling from "../pages/AllForms/Wrestling";
 import Volleyball from "../pages/AllForms/Volleyball";
 import Race from "../pages/AllForms/Race";
 import Tugofwars from "../pages/AllForms/Tugofwars";
-// import PrivacyPolicy from "../pages/PrivacyPolicy/Privacypolicy";
+import PolicyPage from "../pages/PrivacyPolicy/PolicyPage";
+
 
 const router = createBrowserRouter([
   {
@@ -57,7 +58,11 @@ const router = createBrowserRouter([
         path: "admincontact",
         element: <AdminContact />,
       },
-
+      {
+        path: "privacy",
+        element: <PolicyPage />,
+        
+      },
       {
         path: "admineventsnotices",
         element: <AdminEventsNotices />,
