@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase/firebaseConfig";
-import { ref, onValue, off, update, remove } from "firebase/database";
+import { ref, onValue, off, remove } from "firebase/database";
 import Container from "../components/Container/Container";
 import SectionHeader from "../components/SectionHeader/SectionHeader";
 import Cookies from "js-cookie";
@@ -116,30 +116,39 @@ const AppliedTeams = () => {
     const isTeamSport = ["cricketRegistrations", "volleyballRegistrations"].includes(tableFilter);
     
     let exportData;
+    const headerStyle = {
+      font: { bold: true },
+      fill: { patternType: "solid", fgColor: { rgb: "D3D3D3" } },
+      alignment: { horizontal: "center" }
+    };
+
     if (isTeamSport) {
       exportData = filteredRegistrations.map((reg) => ({
         "Team Name": reg.teamName || "N/A",
-        "Number of Players": reg.numPlayers || "N/A",
-        "Players": reg.players ? reg.players.map(p => `${p.playerName} (Father: ${p.fatherName}, Mobile: ${p.mobile}, Aadhaar: ${p.aadhaar})`).join("; ") : "N/A",
-        "Captain Father's Name": reg.captainFatherName || reg.fatherName || "N/A",
-        "Captain Gender": reg.captainGender || reg.gender || "N/A",
-        "Captain DOB": reg.captainDob || reg.dob || "N/A",
+        "Players Count": reg.numPlayers || "N/A",
+        "Players Details": reg.players?.map(p => 
+          `${p.playerName} (Father: ${p.fatherName}, Mobile: ${p.mobile})`).join("\n") || "N/A",
+        "Captain Father": reg.captainFatherName || "N/A",
+        "Gender": reg.captainGender || "N/A",
+        "DOB": reg.captainDob || "N/A",
         "Block": reg.block || "N/A",
         "Village": reg.village || "N/A",
         "Ward No": reg.wardNo || "N/A",
-        "Captain Aadhaar": reg.captainAadhaar || reg.aadhaar || "N/A",
-        "Captain Mobile": reg.captainMobile || reg.mobile || "N/A",
-        "Registered At": reg.timestamp ? new Date(reg.timestamp).toLocaleString() : "N/A",
+        "Aadhaar": reg.captainAadhaar || "N/A",
+        "Mobile": reg.captainMobile || "N/A",
+        "Sarpanch Doc": reg.sarpanchPerformaUrl ? { f: `HYPERLINK("${reg.sarpanchPerformaUrl}", "View")` } : "N/A",
+        "Entry Form": reg.entryFormUrl ? { f: `HYPERLINK("${reg.entryFormUrl}", "View")` } : "N/A",
+        "Registered At": reg.timestamp ? new Date(reg.timestamp).toLocaleString() : "N/A"
       }));
     } else {
       exportData = filteredRegistrations.map((reg) => ({
-        "Team Name": reg.teamName || "N/A",
         "Player Name": reg.playerName || "N/A",
+        "Team Name": reg.teamName || "N/A",
         ...(tableFilter === "wrestlingRegistrations" && { "Weight (kg)": reg.weight || "N/A" }),
-        ...(tableFilter === "tugofwarRegistrations" && { "Number of Players": reg.numPlayers || "N/A" }),
+        ...(tableFilter === "tugofwarRegistrations" && { "Players Count": reg.numPlayers || "N/A" }),
         ...(tableFilter === "raceRegistrations" && {
           "Event Type": reg.eventType || "N/A",
-          "Event Category": reg.eventCategory || "N/A",
+          "Event Category": reg.eventCategory || "N/A"
         }),
         "Father's Name": reg.fatherName || "N/A",
         "Gender": reg.gender || "N/A",
@@ -149,44 +158,44 @@ const AppliedTeams = () => {
         "Ward No": reg.wardNo || "N/A",
         "Aadhaar": reg.aadhaar || "N/A",
         "Mobile": reg.mobile || "N/A",
-        "Registered At": reg.timestamp ? new Date(reg.timestamp).toLocaleString() : "N/A",
+        "Sarpanch Doc": reg.sarpanchPerformaUrl ? { f: `HYPERLINK("${reg.sarpanchPerformaUrl}", "View")` } : "N/A",
+        "Entry Form": reg.entryFormUrl ? { f: `HYPERLINK("${reg.entryFormUrl}", "View")` } : "N/A",
+        "Registered At": reg.timestamp ? new Date(reg.timestamp).toLocaleString() : "N/A"
       }));
     }
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
     
-    // Style the worksheet
-    worksheet["!cols"] = [
-      { wch: 20 }, // Team Name
-      ...(isTeamSport ? [
-        { wch: 15 }, // Number of Players
-        { wch: 50 }, // Players
-      ] : [
-        { wch: 20 }, // Player Name
-        ...(tableFilter === "wrestlingRegistrations" ? [{ wch: 15 }] : []),
-        ...(tableFilter === "tugofwarRegistrations" ? [{ wch: 15 }] : []),
-        ...(tableFilter === "raceRegistrations" ? [{ wch: 20 }, { wch: 20 }] : []),
-      ]),
-      { wch: 20 }, // Father's Name
-      { wch: 10 }, // Gender
-      { wch: 15 }, // DOB
-      { wch: 20 }, // Block
-      { wch: 20 }, // Village
-      { wch: 10 }, // Ward No
-      { wch: 25 }, // Aadhaar
-      { wch: 15 }, // Mobile
-      { wch: 25 }, // Registered At
+    // Add header styling
+    const range = XLSX.utils.decode_range(worksheet["!ref"]);
+    for(let C = range.s.c; C <= range.e.c; ++C) {
+      const headerCell = XLSX.utils.encode_cell({r: range.s.r, c: C});
+      if(worksheet[headerCell]) {
+        worksheet[headerCell].s = headerStyle;
+      }
+    }
+
+    // Set column widths
+    worksheet["!cols"] = isTeamSport ? [
+      { wch: 20 }, { wch: 15 }, { wch: 40 },
+      { wch: 20 }, { wch: 10 }, { wch: 15 },
+      { wch: 15 }, { wch: 20 }, { wch: 10 },
+      { wch: 25 }, { wch: 15 }, { wch: 20 },
+      { wch: 20 }, { wch: 25 }
+    ] : [
+      { wch: 20 }, { wch: 20 }, 
+      ...(tableFilter === "wrestlingRegistrations" ? [{ wch: 15 }] : []),
+      ...(tableFilter === "tugofwarRegistrations" ? [{ wch: 15 }] : []),
+      ...(tableFilter === "raceRegistrations" ? [{ wch: 20 }, { wch: 20 }] : []),
+      { wch: 20 }, { wch: 10 }, { wch: 15 },
+      { wch: 15 }, { wch: 20 }, { wch: 10 },
+      { wch: 25 }, { wch: 15 }, { wch: 20 },
+      { wch: 20 }, { wch: 25 }
     ];
 
-    const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
-    
     XLSX.writeFile(workbook, `${tableFilter}_report_${downloadDate}.xlsx`);
-  };
-
-  const handleEdit = (registration) => {
-    // Edit functionality would need adjustment based on sport type
-    // For simplicity, we'll skip editing for now as it needs more UI changes
   };
 
   const handleDelete = async (id, tableName) => {
@@ -257,11 +266,11 @@ const AppliedTeams = () => {
           <table className="min-w-full text-sm">
             <thead className="bg-gray-800 text-white">
               <tr>
-                <th className="p-3 text-left">Team</th>
                 {["cricketRegistrations", "volleyballRegistrations"].includes(tableFilter) ? (
                   <>
-                    <th className="p-3 text-left">Players Count</th>
+                    <th className="p-3 text-left">Team</th>
                     <th className="p-3 text-left">Players</th>
+                    <th className="p-3 text-left">Details</th>
                   </>
                 ) : (
                   <th className="p-3 text-left">Player</th>
@@ -270,22 +279,24 @@ const AppliedTeams = () => {
                   <th className="p-3 text-left">Weight</th>
                 )}
                 {tableFilter === "tugofwarRegistrations" && (
-                  <th className="p-3 text-left">Players Count</th>
+                  <th className="p-3 text-left">Players</th>
                 )}
                 {tableFilter === "raceRegistrations" && (
                   <>
                     <th className="p-3 text-left">Event Type</th>
-                    <th className="p-3 text-left">Event Category</th>
+                    <th className="p-3 text-left">Category</th>
                   </>
                 )}
                 <th className="p-3 text-left">Father</th>
                 <th className="p-3 text-left">Gender</th>
                 <th className="p-3 text-left">DOB</th>
-                <th className="p-3 text-left">Ward</th>
                 <th className="p-3 text-left">Block</th>
                 <th className="p-3 text-left">Village</th>
+                <th className="p-3 text-left">Ward</th>
                 <th className="p-3 text-left">Aadhaar</th>
                 <th className="p-3 text-left">Mobile</th>
+                <th className="p-3 text-left">Sarpanch Doc</th>
+                <th className="p-3 text-left">Entry Form</th>
                 <th className="p-3 text-left">Registered</th>
                 <th className="p-3 text-left">Actions</th>
               </tr>
@@ -293,20 +304,18 @@ const AppliedTeams = () => {
             <tbody>
               {filteredRegistrations.map((reg) => (
                 <tr key={reg.id} className="border-b hover:bg-gray-50">
-                  <td className="p-3">{reg.teamName || "N/A"}</td>
                   {["cricketRegistrations", "volleyballRegistrations"].includes(tableFilter) ? (
                     <>
+                      <td className="p-3">{reg.teamName || "N/A"}</td>
                       <td className="p-3">{reg.numPlayers || "N/A"}</td>
                       <td className="p-3">
-                        {reg.players && reg.players.length > 0 ? (
-                          <ul className="list-disc pl-4">
-                            {reg.players.map((player, idx) => (
-                              <li key={idx}>
-                                {player.playerName} (Father: {player.fatherName}, Mobile: {player.mobile}, Aadhaar: {player.aadhaar})
-                              </li>
-                            ))}
-                          </ul>
-                        ) : "N/A"}
+                        {reg.players?.map((player, idx) => (
+                          <div key={idx} className="mb-2">
+                            <p className="font-medium">{player.playerName}</p>
+                            <p className="text-sm">Father: {player.fatherName}</p>
+                            <p className="text-sm">Mobile: {player.mobile}</p>
+                          </div>
+                        )) || "N/A"}
                       </td>
                     </>
                   ) : (
@@ -327,13 +336,37 @@ const AppliedTeams = () => {
                   <td className="p-3">{reg.captainFatherName || reg.fatherName || "N/A"}</td>
                   <td className="p-3">{reg.captainGender || reg.gender || "N/A"}</td>
                   <td className="p-3">{reg.captainDob || reg.dob || "N/A"}</td>
-                  <td className="p-3">{reg.wardNo || "N/A"}</td>
                   <td className="p-3">{reg.block || "N/A"}</td>
                   <td className="p-3">{reg.village || "N/A"}</td>
+                  <td className="p-3">{reg.wardNo || "N/A"}</td>
                   <td className="p-3">{reg.captainAadhaar || reg.aadhaar || "N/A"}</td>
                   <td className="p-3">{reg.captainMobile || reg.mobile || "N/A"}</td>
+                  <td className="p-3">
+                    {reg.sarpanchPerformaUrl ? (
+                      <a
+                        href={reg.sarpanchPerformaUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        View
+                      </a>
+                    ) : "N/A"}
+                  </td>
+                  <td className="p-3">
+                    {reg.entryFormUrl ? (
+                      <a
+                        href={reg.entryFormUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        View
+                      </a>
+                    ) : "N/A"}
+                  </td>
                   <td className="p-3">{new Date(reg.timestamp).toLocaleString()}</td>
-                  <td className="p-3 space-x-2">
+                  <td className="p-3">
                     <button
                       onClick={() => handleDelete(reg.id, reg.tableName)}
                       className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
