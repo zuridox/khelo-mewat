@@ -750,53 +750,6 @@ const Cricket = () => {
                   </div>
 
                   <div className="mb-4">
-                    <label className="block text-gray-700">
-                      Captain's Father's Name
-                    </label>
-                    <input
-                      type="text"
-                      name="fatherName"
-                      value={formData.fatherName}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg bg-white text-black"
-                      placeholder="Enter Father's Name"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700">
-                      Captain's Gender
-                    </label>
-                    <select
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg bg-white text-black"
-                      required
-                    >
-                      <option value="">Select Gender</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700">
-                      Captain's Date of Birth
-                    </label>
-                    <input
-                      type="date"
-                      name="dob"
-                      value={formData.dob}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg bg-white text-black"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
                     <label className="block text-gray-700">Block</label>
                     <select
                       name="block"
@@ -845,36 +798,6 @@ const Cricket = () => {
                       onChange={handleInputChange}
                       className="w-full p-2 border rounded-lg bg-white text-black"
                       placeholder="Enter Ward No"
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700">
-                      Captain's Aadhaar Number
-                    </label>
-                    <input
-                      type="text"
-                      name="aadhaar"
-                      value={formData.aadhaar}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg bg-white text-black"
-                      placeholder="Enter Aadhaar Number"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700">
-                      Captain's Mobile Number
-                    </label>
-                    <input
-                      type="tel"
-                      name="mobile"
-                      value={formData.mobile}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg bg-white text-black"
-                      placeholder="Enter Mobile Number"
-                      required
                     />
                   </div>
 

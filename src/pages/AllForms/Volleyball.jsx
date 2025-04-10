@@ -579,7 +579,9 @@ const Volleyball = () => {
       <ScrollPageTop />
       <Container>
         <SectionHeader
-          heading={<span style={{ color: "#E87722" }}>Apply for Volleyball</span>}
+          heading={
+            <span style={{ color: "#E87722" }}>Apply for Volleyball</span>
+          }
         />
 
         <FadeInAnimation>
@@ -627,7 +629,8 @@ const Volleyball = () => {
                   Registration Submitted Successfully!
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Your volleyball team registration has been successfully submitted.
+                  Your volleyball team registration has been successfully
+                  submitted.
                 </p>
                 <button
                   onClick={handleNewRegistration}
@@ -670,7 +673,8 @@ const Volleyball = () => {
                           >
                             <span>
                               {index + 1}. {player.playerName} (Father:{" "}
-                              {player.fatherName}) (Mobile: {player.mobile}) (Aadhaar:
+                              {player.fatherName}) (Mobile: {player.mobile})
+                              (Aadhaar:
                               {player.aadhaar})
                             </span>
                             <button
@@ -686,7 +690,9 @@ const Volleyball = () => {
                     )}
                     <div className="border p-4 rounded-lg">
                       <div className="mb-2">
-                        <label className="block text-gray-700">Player Name</label>
+                        <label className="block text-gray-700">
+                          Player Name
+                        </label>
                         <input
                           type="text"
                           name="playerName"
@@ -697,7 +703,9 @@ const Volleyball = () => {
                         />
                       </div>
                       <div className="mb-2">
-                        <label className="block text-gray-700">Father's Name</label>
+                        <label className="block text-gray-700">
+                          Father's Name
+                        </label>
                         <input
                           type="text"
                           name="fatherName"
@@ -708,7 +716,9 @@ const Volleyball = () => {
                         />
                       </div>
                       <div className="mb-2">
-                        <label className="block text-gray-700">Mobile Number</label>
+                        <label className="block text-gray-700">
+                          Mobile Number
+                        </label>
                         <input
                           type="tel"
                           name="mobile"
@@ -719,7 +729,9 @@ const Volleyball = () => {
                         />
                       </div>
                       <div className="mb-2">
-                        <label className="block text-gray-700">Aadhaar Number</label>
+                        <label className="block text-gray-700">
+                          Aadhaar Number
+                        </label>
                         <input
                           type="text"
                           name="aadhaar"
@@ -737,47 +749,6 @@ const Volleyball = () => {
                         Add Player
                       </button>
                     </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700">Captain's Father's Name</label>
-                    <input
-                      type="text"
-                      name="fatherName"
-                      value={formData.fatherName}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg bg-white text-black"
-                      placeholder="Enter Father's Name"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700">Captain's Gender</label>
-                    <select
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg bg-white text-black"
-                      required
-                    >
-                      <option value="">Select Gender</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700">Captain's Date of Birth</label>
-                    <input
-                      type="date"
-                      name="dob"
-                      value={formData.dob}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg bg-white text-black"
-                      required
-                    />
                   </div>
 
                   <div className="mb-4">
@@ -819,7 +790,9 @@ const Volleyball = () => {
                   )}
 
                   <div className="mb-4">
-                    <label className="block text-gray-700">Ward No (Optional)</label>
+                    <label className="block text-gray-700">
+                      Ward No (Optional)
+                    </label>
                     <input
                       type="text"
                       name="wardNo"
@@ -827,32 +800,6 @@ const Volleyball = () => {
                       onChange={handleInputChange}
                       className="w-full p-2 border rounded-lg bg-white text-black"
                       placeholder="Enter Ward No"
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700">Captain's Aadhaar Number</label>
-                    <input
-                      type="text"
-                      name="aadhaar"
-                      value={formData.aadhaar}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg bg-white text-black"
-                      placeholder="Enter Aadhaar Number"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700">Captain's Mobile Number</label>
-                    <input
-                      type="tel"
-                      name="mobile"
-                      value={formData.mobile}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg bg-white text-black"
-                      placeholder="Enter Mobile Number"
-                      required
                     />
                   </div>
 
