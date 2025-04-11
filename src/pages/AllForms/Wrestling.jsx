@@ -6,7 +6,7 @@ import logo from "../../assets/logo/logom.png";
 import FadeInAnimation from "../../components/FadeInAnimation/FadeInAnimation";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { db } from "../../firebase/firebaseConfig"; // Adjust the path to your firebase config file
+import { db } from "../../firebase/firebaseConfig";
 import { ref, push, set } from "firebase/database";
 
 const blockVillageData = {
@@ -357,11 +357,9 @@ const Wrestling = () => {
     weight: "",
     fatherName: "",
     gender: "",
-    dob: "",
     block: "",
     village: "",
     wardNo: "",
-    aadhaar: "",
     mobile: "",
     entryForm: null,
     sarpanchPerforma: null,
@@ -373,30 +371,27 @@ const Wrestling = () => {
 
   const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/de3vcuioj/upload";
   const UPLOAD_PRESET = "PDF_Hai";
-  const MAX_FILE_SIZE = 300 * 1024; // 300KB in bytes
+  const MAX_FILE_SIZE = 300 * 1024; // 300KB
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === "aadhaar") {
-      const aadhaarValue = value.replace(/\D/g, "").slice(0, 12);
-      setFormData({ ...formData, [name]: aadhaarValue });
-    } else if (name === "mobile") {
+    if (name === "mobile") {
       const mobileValue = value.replace(/\D/g, "").slice(0, 10);
       setFormData({ ...formData, [name]: mobileValue });
-    } else if (name === "weight") {
-      const weightValue = value.replace(/\D/g, "");
-      if (weightValue <= 130) {
-        setFormData({ ...formData, [name]: weightValue });
+      if (mobileValue.length > 0 && mobileValue.length !== 10) {
+        setError("Mobile number must be exactly 10 digits");
+      } else {
+        setError(null);
       }
     } else if (files) {
       const file = files[0];
       if (file) {
         if (file.size > MAX_FILE_SIZE) {
-          setError("Please upload a form below 300KB");
+          setError(`${name === "entryForm" ? "Entry Form" : "Sarpanch Performa"} must be below 300KB`);
           return;
         }
         setFormData({ ...formData, [name]: file });
-        setError(null); // Clear error when a valid file is selected
+        setError(null);
       }
     } else {
       setFormData({ ...formData, [name]: value });
@@ -411,7 +406,10 @@ const Wrestling = () => {
 
   const uploadToCloudinary = async (file, fileType) => {
     if (!file) {
-      throw new Error("Please upload a form below 300KB");
+      throw new Error(`No ${fileType} file provided`);
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`${fileType} file must be below 300KB`);
     }
 
     const formData = new FormData();
@@ -426,17 +424,14 @@ const Wrestling = () => {
       const data = await response.json();
       if (!data.secure_url) {
         throw new Error(
-          `Cloudinary upload failed for ${fileType}: ${
-            data.error?.message || "Unknown error"
-          }`
+          `Cloudinary upload failed for ${fileType}: ${data.error?.message || "Unknown error"}`
         );
       }
       console.log(`${fileType} uploaded successfully: ${data.secure_url}`);
       return data.secure_url;
     } catch (err) {
-      throw new Error(
-        `Cloudinary upload failed for ${fileType}: ${err.message}`
-      );
+      console.error(`Cloudinary upload error for ${fileType}:`, err);
+      throw new Error(`Failed to upload ${fileType}: ${err.message}`);
     }
   };
 
@@ -446,24 +441,33 @@ const Wrestling = () => {
     setError(null);
     setSuccess(false);
 
-    // Basic validation for weight
-    if (formData.weight && (formData.weight < 50 || formData.weight > 130)) {
-      setError("Weight must be between 50 and 130 KG");
-      setLoading(false);
-      return;
-    }
-
     try {
-      // Validate required files
-      if (!formData.entryForm || !formData.sarpanchPerforma) {
-        throw new Error("Please upload a form below 300KB");
+      // Validate required fields
+      if (
+        !formData.teamName.trim() ||
+        !formData.playerName.trim() ||
+        !formData.weight ||
+        !formData.fatherName.trim() ||
+        !formData.gender ||
+        !formData.block ||
+        !formData.village ||
+        !formData.mobile.match(/^\d{10}$/) ||
+        !formData.entryForm ||
+        !formData.sarpanchPerforma
+      ) {
+        throw new Error(
+          "Please fill all required fields correctly: Team Name, Player Name, Weight, Father's Name, Gender, Block, Village, 10-digit Mobile, Entry Form, and Sarpanch Performa"
+        );
+      }
+
+      // Validate weight against dropdown options
+      const validWeights = ["57", "65", "74", "86", "97"];
+      if (!validWeights.includes(formData.weight)) {
+        throw new Error("Please select a valid weight category (57, 65, 74, 86, or 97 kg)");
       }
 
       // Upload files to Cloudinary
-      const entryFormUrl = await uploadToCloudinary(
-        formData.entryForm,
-        "Entry Form"
-      );
+      const entryFormUrl = await uploadToCloudinary(formData.entryForm, "Entry Form");
       const sarpanchPerformaUrl = await uploadToCloudinary(
         formData.sarpanchPerforma,
         "Sarpanch Performa"
@@ -476,23 +480,28 @@ const Wrestling = () => {
         weight: formData.weight,
         fatherName: formData.fatherName,
         gender: formData.gender,
-        dob: formData.dob,
         block: formData.block,
         village: formData.village,
         wardNo: formData.wardNo,
-        aadhaar: formData.aadhaar,
         mobile: formData.mobile,
-        entryFormUrl: entryFormUrl,
-        sarpanchPerformaUrl: sarpanchPerformaUrl,
+        entryFormUrl,
+        sarpanchPerformaUrl,
         timestamp: new Date().toISOString(),
       };
 
       console.log("Data to be sent to Firebase:", registrationData);
 
+      // Save to Firebase
       const wrestlingRef = ref(db, "wrestlingRegistrations");
       const newRegistrationRef = push(wrestlingRef);
 
-      await set(newRegistrationRef, registrationData);
+      try {
+        await set(newRegistrationRef, registrationData);
+        console.log("Data successfully written to Firebase with key:", newRegistrationRef.key);
+      } catch (firebaseError) {
+        console.error("Firebase write error:", firebaseError);
+        throw new Error(`Failed to save to Firebase: ${firebaseError.message}`);
+      }
 
       setSuccess(true);
       setFormData({
@@ -501,11 +510,9 @@ const Wrestling = () => {
         weight: "",
         fatherName: "",
         gender: "",
-        dob: "",
         block: "",
         village: "",
         wardNo: "",
-        aadhaar: "",
         mobile: "",
         entryForm: null,
         sarpanchPerforma: null,
@@ -530,9 +537,7 @@ const Wrestling = () => {
       <ScrollPageTop />
       <Container>
         <SectionHeader
-          heading={
-            <span style={{ color: "#E87722" }}>Apply for Wrestling</span>
-          }
+          heading={<span style={{ color: "#E87722" }}>Apply for Wrestling</span>}
         />
 
         <FadeInAnimation>
@@ -557,7 +562,8 @@ const Wrestling = () => {
               Last Date to Apply: 15 April 2025
             </p>
 
-            <br></br>
+            <br />
+
             {success && (
               <div className="mb-4 p-2 bg-green-100 text-green-700 rounded">
                 Registration submitted successfully!
@@ -600,18 +606,14 @@ const Wrestling = () => {
                 <label className="block text-gray-700">Weight Category</label>
                 <select
                   name="weight"
-                  className="w-full p-2 border rounded-lg bg-white text-black"
                   value={formData.weight}
                   onChange={handleInputChange}
+                  className="w-full p-2 border rounded-lg bg-white text-black"
                   required
                 >
                   <option value="">Select Weight</option>
-                  {/* <option value="45">45 Kg</option>
-                  <option value="50">50 Kg</option>
-                  <option value="55">55 Kg</option> */}
                   <option value="57">57 Kg</option>
                   <option value="65">65 Kg</option>
-                  {/* <option value="70">70 Kg</option> */}
                   <option value="74">74 Kg</option>
                   <option value="86">86 Kg</option>
                   <option value="97">97 Kg</option>
@@ -686,7 +688,7 @@ const Wrestling = () => {
               )}
 
               <div className="mb-4">
-                <label className="block text-gray-700">Ward No(Optional)</label>
+                <label className="block text-gray-700">Ward No (Optional)</label>
                 <input
                   type="text"
                   name="wardNo"
@@ -705,14 +707,14 @@ const Wrestling = () => {
                   value={formData.mobile}
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded-lg bg-white text-black"
-                  placeholder="Enter Mobile Number"
+                  placeholder="Enter 10-digit Mobile Number"
                   required
                 />
               </div>
 
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium">
-                  Entry Form (PDF, JPG, JPEG)
+                  Entry Form (PDF, JPG, JPEG, max 300KB)
                 </label>
                 <input
                   type="file"
@@ -726,7 +728,7 @@ const Wrestling = () => {
 
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium">
-                  Sarpanch Performa (PDF, JPG, JPEG)
+                  Sarpanch Performa (PDF, JPG, JPEG, max 300KB)
                 </label>
                 <input
                   type="file"
@@ -740,11 +742,9 @@ const Wrestling = () => {
 
               <button
                 type="submit"
-                disabled={loading || error !== null}
+                disabled={loading}
                 className={`bg-[#E87722] text-white px-4 py-2 rounded-lg w-full hover:bg-[#39A935] ${
-                  loading || error !== null
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
+                  loading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
                 {loading ? "Submitting..." : "Submit Application"}

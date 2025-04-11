@@ -354,15 +354,10 @@ const Volleyball = () => {
   const [formData, setFormData] = useState({
     teamName: "",
     players: [],
-    numPlayers: 1,
-    fatherName: "",
-    gender: "",
-    dob: "",
+    numPlayers: 0,
     block: "",
     village: "",
     wardNo: "",
-    aadhaar: "",
-    mobile: "",
     entryForm: null,
     sarpanchPerforma: null,
   });
@@ -371,7 +366,6 @@ const Volleyball = () => {
     playerName: "",
     fatherName: "",
     mobile: "",
-    aadhaar: "",
   });
 
   const [villages, setVillages] = useState([]);
@@ -384,13 +378,7 @@ const Volleyball = () => {
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === "aadhaar") {
-      const aadhaarValue = value.replace(/\D/g, "").slice(0, 12);
-      setFormData({ ...formData, [name]: aadhaarValue });
-    } else if (name === "mobile") {
-      const mobileValue = value.replace(/\D/g, "").slice(0, 10);
-      setFormData({ ...formData, [name]: mobileValue });
-    } else if (files) {
+    if (files) {
       const file = files[0];
       if (file) {
         setFormData({ ...formData, [name]: file });
@@ -403,10 +391,7 @@ const Volleyball = () => {
 
   const handlePlayerInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === "aadhaar") {
-      const aadhaarValue = value.replace(/\D/g, "").slice(0, 12);
-      setNewPlayer({ ...newPlayer, [name]: aadhaarValue });
-    } else if (name === "mobile") {
+    if (name === "mobile") {
       const mobileValue = value.replace(/\D/g, "").slice(0, 10);
       setNewPlayer({ ...newPlayer, [name]: mobileValue });
     } else {
@@ -415,12 +400,11 @@ const Volleyball = () => {
   };
 
   const addPlayer = () => {
-    if (
-      newPlayer.playerName &&
-      newPlayer.fatherName &&
-      newPlayer.mobile &&
-      newPlayer.aadhaar
-    ) {
+    if (newPlayer.playerName && newPlayer.fatherName && newPlayer.mobile) {
+      if (newPlayer.mobile.length !== 10) {
+        setError("Player mobile must be exactly 10 digits");
+        return;
+      }
       setFormData({
         ...formData,
         players: [...formData.players, { ...newPlayer }],
@@ -430,7 +414,6 @@ const Volleyball = () => {
         playerName: "",
         fatherName: "",
         mobile: "",
-        aadhaar: "",
       });
       setError(null);
     } else {
@@ -475,11 +458,11 @@ const Volleyball = () => {
           }`
         );
       }
-      console.log(`${fileType} uploaded successfully: ${data.secure_url}`);
+      console.log(`{fileType} uploaded successfully: ${data.secure_url}`);
       return data.secure_url;
     } catch (err) {
       throw new Error(
-        `Cloudinary upload failed for ${fileType}: ${err.message}`
+        console.log(`load failed for ${fileType}: ${err.message}`)
       );
     }
   };
@@ -491,16 +474,21 @@ const Volleyball = () => {
     setSuccess(false);
 
     try {
+      // Validation
       if (!formData.teamName) {
         throw new Error("Team name is required");
       }
       if (formData.players.length === 0) {
         throw new Error("Please add at least one player");
       }
+      if (!formData.block || !formData.village) {
+        throw new Error("Please select both block and village");
+      }
       if (!formData.entryForm || !formData.sarpanchPerforma) {
         throw new Error("Please upload both entry form and sarpanch performa");
       }
 
+      // Upload files to Cloudinary
       const entryFormUrl = await uploadToCloudinary(
         formData.entryForm,
         "Entry Form"
@@ -510,18 +498,14 @@ const Volleyball = () => {
         "Sarpanch Performa"
       );
 
+      // Prepare data for Firebase
       const registrationData = {
         teamName: formData.teamName,
         players: formData.players,
         numPlayers: formData.players.length,
-        captainFatherName: formData.fatherName,
-        captainGender: formData.gender,
-        captainDob: formData.dob,
         block: formData.block,
         village: formData.village,
         wardNo: formData.wardNo || "",
-        captainAadhaar: formData.aadhaar,
-        captainMobile: formData.mobile,
         entryFormUrl: entryFormUrl,
         sarpanchPerformaUrl: sarpanchPerformaUrl,
         timestamp: new Date().toISOString(),
@@ -529,23 +513,22 @@ const Volleyball = () => {
 
       console.log("Data to be sent to Firebase:", registrationData);
 
+      // Save to Firebase
       const volleyballRef = ref(db, "volleyballRegistrations");
       const newRegistrationRef = push(volleyballRef);
       await set(newRegistrationRef, registrationData);
 
+      // Set success state
       setSuccess(true);
+
+      // Reset form
       setFormData({
         teamName: "",
         players: [],
-        numPlayers: 1,
-        fatherName: "",
-        gender: "",
-        dob: "",
+        numPlayers: 0,
         block: "",
         village: "",
         wardNo: "",
-        aadhaar: "",
-        mobile: "",
         entryForm: null,
         sarpanchPerforma: null,
       });
@@ -554,10 +537,9 @@ const Volleyball = () => {
         playerName: "",
         fatherName: "",
         mobile: "",
-        aadhaar: "",
       });
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "An error occurred during submission");
       console.error("Submission error:", err);
     } finally {
       setLoading(false);
@@ -566,6 +548,7 @@ const Volleyball = () => {
 
   const handleNewRegistration = () => {
     setSuccess(false);
+    setError(null);
   };
 
   return (
@@ -673,7 +656,7 @@ const Volleyball = () => {
                           >
                             <span>
                               {index + 1}. {player.playerName} (Father:{" "}
-                              {player.fatherName}) (Mobile: {player.mobile})
+                              {player.fatherName}, Mobile: {player.mobile})
                             </span>
                             <button
                               type="button"
@@ -775,7 +758,7 @@ const Volleyball = () => {
                   )}
 
                   <div className="mb-4">
-                    <label className="block text-gray-700">
+                    <label class RUSclassName="block text-gray-700">
                       Ward No (Optional)
                     </label>
                     <input

@@ -354,7 +354,7 @@ const Cricket = () => {
   const [formData, setFormData] = useState({
     teamName: "",
     players: [],
-    numPlayers: 1,
+    numPlayers: 0,
     fatherName: "",
     gender: "",
     dob: "",
@@ -417,7 +417,7 @@ const Cricket = () => {
   const addPlayer = () => {
     if (
       newPlayer.playerName &&
-      newPlayer.fatherName && // Fixed typo: removed "new автоматиPlayer"
+      newPlayer.fatherName &&
       newPlayer.mobile &&
       newPlayer.aadhaar
     ) {
@@ -479,7 +479,7 @@ const Cricket = () => {
       return data.secure_url;
     } catch (err) {
       throw new Error(
-        `Cloudinary upload failed for ${fileType}: ${err.message}`
+        console.log(`Cloudinary upload failed for ${fileType}: ${err.message}`)
       );
     }
   };
@@ -491,6 +491,7 @@ const Cricket = () => {
     setSuccess(false);
 
     try {
+      // Validation
       if (!formData.teamName) {
         throw new Error("Team name is required");
       }
@@ -500,7 +501,20 @@ const Cricket = () => {
       if (!formData.entryForm || !formData.sarpanchPerforma) {
         throw new Error("Please upload both entry form and sarpanch performa");
       }
+      if (!formData.block || !formData.village) {
+        throw new Error("Please select both block and village");
+      }
+      if (!formData.fatherName || !formData.gender || !formData.dob) {
+        throw new Error("Please fill all captain details");
+      }
+      if (!formData.aadhaar || formData.aadhaar.length !== 12) {
+        throw new Error("Please provide a valid 12-digit Aadhaar number");
+      }
+      if (!formData.mobile || formData.mobile.length !== 10) {
+        throw new Error("Please provide a valid 10-digit mobile number");
+      }
 
+      // Upload files to Cloudinary
       const entryFormUrl = await uploadToCloudinary(
         formData.entryForm,
         "Entry Form"
@@ -510,6 +524,7 @@ const Cricket = () => {
         "Sarpanch Performa"
       );
 
+      // Prepare data for Firebase
       const registrationData = {
         teamName: formData.teamName,
         players: formData.players,
@@ -529,15 +544,19 @@ const Cricket = () => {
 
       console.log("Data to be sent to Firebase:", registrationData);
 
+      // Save to Firebase
       const cricketRef = ref(db, "cricketRegistrations");
       const newRegistrationRef = push(cricketRef);
       await set(newRegistrationRef, registrationData);
 
+      // Set success state
       setSuccess(true);
+
+      // Reset form
       setFormData({
         teamName: "",
         players: [],
-        numPlayers: 1,
+        numPlayers: 0,
         fatherName: "",
         gender: "",
         dob: "",
@@ -557,7 +576,7 @@ const Cricket = () => {
         aadhaar: "",
       });
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "An error occurred during submission");
       console.error("Submission error:", err);
     } finally {
       setLoading(false);
@@ -566,6 +585,7 @@ const Cricket = () => {
 
   const handleNewRegistration = () => {
     setSuccess(false);
+    setError(null);
   };
 
   return (
@@ -645,6 +665,7 @@ const Cricket = () => {
                   </div>
                 )}
                 <form onSubmit={handleSubmit}>
+                  {/* Team Name */}
                   <div className="mb-4">
                     <label className="block text-gray-700">Team Name</label>
                     <input
@@ -658,6 +679,9 @@ const Cricket = () => {
                     />
                   </div>
 
+               
+
+                  {/* Players List */}
                   <div className="mb-4">
                     <label className="block text-gray-700 font-bold">
                       Players List ({formData.players.length} added)
@@ -671,7 +695,7 @@ const Cricket = () => {
                           >
                             <span>
                               {index + 1}. {player.playerName} (Father:{" "}
-                              {player.fatherName}) (Mobile: {player.mobile})
+                              {player.fatherName}, Mobile: {player.mobile})
                             </span>
                             <button
                               type="button"
@@ -724,6 +748,19 @@ const Cricket = () => {
                           placeholder="Enter Mobile Number"
                         />
                       </div>
+                      <div className="mb-2">
+                        <label className="block text-gray-700">
+                          Aadhaar Number
+                        </label>
+                        <input
+                          type="text"
+                          name="aadhaar"
+                          value={newPlayer.aadhaar}
+                          onChange={handlePlayerInputChange}
+                          className="w-full p-2 border rounded-lg bg-white text-black"
+                          placeholder="Enter Aadhaar Number"
+                        />
+                      </div>
                       <button
                         type="button"
                         onClick={addPlayer}
@@ -734,6 +771,7 @@ const Cricket = () => {
                     </div>
                   </div>
 
+                  {/* Block and Village */}
                   <div className="mb-4">
                     <label className="block text-gray-700">Block</label>
                     <select
@@ -772,6 +810,7 @@ const Cricket = () => {
                     </div>
                   )}
 
+                  {/* Ward No */}
                   <div className="mb-4">
                     <label className="block text-gray-700">
                       Ward No (Optional)
@@ -786,6 +825,7 @@ const Cricket = () => {
                     />
                   </div>
 
+                  {/* File Uploads */}
                   <div className="mb-4">
                     <label className="block text-gray-700 font-medium">
                       Entry Form (PDF, JPG, JPEG)
@@ -814,6 +854,7 @@ const Cricket = () => {
                     />
                   </div>
 
+                  {/* Submit Button */}
                   <button
                     type="submit"
                     disabled={loading}
