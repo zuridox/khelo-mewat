@@ -399,7 +399,6 @@ const Tugofwars = () => {
 
   const handlePlayerInputChange = (e) => {
     const { name, value } = e.target;
-
     if (name === "mobile") {
       const mobileValue = value.replace(/\D/g, "").slice(0, 10);
       setNewPlayer({ ...newPlayer, [name]: mobileValue });
@@ -426,22 +425,19 @@ const Tugofwars = () => {
       setNewPlayer({
         playerName: "",
         fatherName: "",
-        mobile: "",
+        mobile: "", // Reset mobile field
       });
       setError(null);
     } else {
       setError(
-        "Please provide valid player details: Name, Father's Name, 10-digit Mobile"
+        "Please provide valid player details: Name, Father's Name, and 10-digit Mobile"
       );
     }
   };
 
   const removePlayer = (index) => {
     const updatedPlayers = formData.players.filter((_, i) => i !== index);
-    setFormData({
-      ...formData,
-      players: updatedPlayers,
-    });
+    setFormData({ ...formData, players: updatedPlayers });
   };
 
   const handleBlockChange = (e) => {
@@ -493,22 +489,27 @@ const Tugofwars = () => {
       // Validate required fields
       if (
         !formData.teamName.trim() ||
+        formData.players.length === 0 ||
         !formData.block ||
         !formData.village ||
         !formData.entryForm ||
-        !formData.sarpanchPerforma ||
-        formData.players.length === 0
+        !formData.sarpanchPerforma
       ) {
         throw new Error(
-          "Please fill all required fields: Team Name, Block, Village, Players, Entry Form, and Sarpanch Performa"
+          "Please fill all required fields: Team Name, at least one Player, Block, Village, Entry Form, and Sarpanch Performa"
         );
       }
 
-      // Upload files to Cloudinary
-      const entryFormUrl = await uploadToCloudinary(
-        formData.entryForm,
-        "Entry Form"
+      // Validate player mobile numbers
+      const invalidPlayers = formData.players.filter(
+        (player) => !player.mobile.match(/^\d{10}$/)
       );
+      if (invalidPlayers.length > 0) {
+        throw new Error("All players must have a valid 10-digit mobile number");
+      }
+
+      // Upload files to Cloudinary
+      const entryFormUrl = await uploadToCloudinary(formData.entryForm, "Entry Form");
       const sarpanchPerformaUrl = await uploadToCloudinary(
         formData.sarpanchPerforma,
         "Sarpanch Performa"
@@ -535,10 +536,7 @@ const Tugofwars = () => {
 
       try {
         await set(newRegistrationRef, registrationData);
-        console.log(
-          "Data successfully written to Firebase with key:",
-          newRegistrationRef.key
-        );
+        console.log("Data successfully written to Firebase with key:", newRegistrationRef.key);
       } catch (firebaseError) {
         console.error("Firebase write error:", firebaseError);
         throw new Error(`Failed to save to Firebase: ${firebaseError.message}`);
@@ -557,6 +555,7 @@ const Tugofwars = () => {
       setNewPlayer({
         playerName: "",
         fatherName: "",
+        mobile: "",
       });
       setVillages([]);
     } catch (err) {
@@ -578,9 +577,7 @@ const Tugofwars = () => {
       <ScrollPageTop />
       <Container>
         <SectionHeader
-          heading={
-            <span style={{ color: "#E87722" }}>Apply for Tug of War</span>
-          }
+          heading={<span style={{ color: "#E87722" }}>Apply for Tug of War</span>}
         />
 
         <FadeInAnimation>
@@ -645,8 +642,7 @@ const Tugofwars = () => {
                         className="flex justify-between items-center p-2 bg-gray-100 rounded mb-2"
                       >
                         <span>
-                          {index + 1}. {player.playerName} (Father:{" "}
-                          {player.fatherName}, Mobile: {player.mobile})
+                          {index + 1}. {player.playerName} (Father: {player.fatherName}, Mobile: {player.mobile})
                         </span>
                         <button
                           type="button"
@@ -746,9 +742,7 @@ const Tugofwars = () => {
               )}
 
               <div className="mb-4">
-                <label className="block text-gray-700">
-                  Ward No (Optional)
-                </label>
+                <label className="block text-gray-700">Ward No (Optional)</label>
                 <input
                   type="text"
                   name="wardNo"

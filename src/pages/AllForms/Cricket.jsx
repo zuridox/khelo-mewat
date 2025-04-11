@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { ref, push, set } from "firebase/database";
 import { db } from "../../firebase/firebaseConfig";
 
+// Block and Village Data (unchanged, omitted for brevity)
 const blockVillageData = {
   Nuh: [
     "Untka",
@@ -354,15 +355,9 @@ const Cricket = () => {
   const [formData, setFormData] = useState({
     teamName: "",
     players: [],
-    numPlayers: 0,
-    fatherName: "",
-    gender: "",
-    dob: "",
     block: "",
     village: "",
     wardNo: "",
-    aadhaar: "",
-    mobile: "",
     entryForm: null,
     sarpanchPerforma: null,
   });
@@ -371,7 +366,6 @@ const Cricket = () => {
     playerName: "",
     fatherName: "",
     mobile: "",
-    aadhaar: "",
   });
 
   const [villages, setVillages] = useState([]);
@@ -381,18 +375,21 @@ const Cricket = () => {
 
   const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/de3vcuioj/upload";
   const UPLOAD_PRESET = "PDF_Hai";
+  const MAX_FILE_SIZE = 300 * 1024; // 300KB
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === "aadhaar") {
-      const aadhaarValue = value.replace(/\D/g, "").slice(0, 12);
-      setFormData({ ...formData, [name]: aadhaarValue });
-    } else if (name === "mobile") {
-      const mobileValue = value.replace(/\D/g, "").slice(0, 10);
-      setFormData({ ...formData, [name]: mobileValue });
-    } else if (files) {
+    if (files) {
       const file = files[0];
       if (file) {
+        if (file.size > MAX_FILE_SIZE) {
+          setError(
+            `${
+              name === "entryForm" ? "Entry Form" : "Sarpanch Performa"
+            } must be below 300KB`
+          );
+          return;
+        }
         setFormData({ ...formData, [name]: file });
         setError(null);
       }
@@ -403,12 +400,14 @@ const Cricket = () => {
 
   const handlePlayerInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === "aadhaar") {
-      const aadhaarValue = value.replace(/\D/g, "").slice(0, 12);
-      setNewPlayer({ ...newPlayer, [name]: aadhaarValue });
-    } else if (name === "mobile") {
+    if (name === "mobile") {
       const mobileValue = value.replace(/\D/g, "").slice(0, 10);
       setNewPlayer({ ...newPlayer, [name]: mobileValue });
+      if (mobileValue.length > 0 && mobileValue.length !== 10) {
+        setError("Mobile number must be exactly 10 digits");
+      } else {
+        setError(null);
+      }
     } else {
       setNewPlayer({ ...newPlayer, [name]: value });
     }
@@ -416,35 +415,30 @@ const Cricket = () => {
 
   const addPlayer = () => {
     if (
-      newPlayer.playerName &&
-      newPlayer.fatherName &&
-      newPlayer.mobile &&
-      newPlayer.aadhaar
+      newPlayer.playerName.trim() &&
+      newPlayer.fatherName.trim() &&
+      newPlayer.mobile.match(/^\d{10}$/)
     ) {
       setFormData({
         ...formData,
         players: [...formData.players, { ...newPlayer }],
-        numPlayers: formData.players.length + 1,
       });
       setNewPlayer({
         playerName: "",
         fatherName: "",
         mobile: "",
-        aadhaar: "",
       });
       setError(null);
     } else {
-      setError("Please fill all player details before adding");
+      setError(
+        "Please provide valid player details: Name, Father's Name, and 10-digit Mobile"
+      );
     }
   };
 
   const removePlayer = (index) => {
     const updatedPlayers = formData.players.filter((_, i) => i !== index);
-    setFormData({
-      ...formData,
-      players: updatedPlayers,
-      numPlayers: updatedPlayers.length,
-    });
+    setFormData({ ...formData, players: updatedPlayers });
   };
 
   const handleBlockChange = (e) => {
@@ -455,7 +449,10 @@ const Cricket = () => {
 
   const uploadToCloudinary = async (file, fileType) => {
     if (!file) {
-      throw new Error(`Please upload ${fileType}`);
+      throw new Error(`No ${fileType} file provided`);
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`${fileType} must be below 300KB`);
     }
 
     const formData = new FormData();
@@ -478,9 +475,8 @@ const Cricket = () => {
       console.log(`${fileType} uploaded successfully: ${data.secure_url}`);
       return data.secure_url;
     } catch (err) {
-      throw new Error(
-        console.log(`Cloudinary upload failed for ${fileType}: ${err.message}`)
-      );
+      console.error(`Cloudinary upload error for ${fileType}:`, err);
+      throw new Error(`Failed to upload ${fileType}: ${err.message}`);
     }
   };
 
@@ -492,26 +488,30 @@ const Cricket = () => {
 
     try {
       // Validation
-      if (!formData.teamName) {
+      if (!formData.teamName.trim()) {
         throw new Error("Team name is required");
       }
       if (formData.players.length === 0) {
         throw new Error("Please add at least one player");
       }
-      if (!formData.entryForm || !formData.sarpanchPerforma) {
-        throw new Error("Please upload both entry form and sarpanch performa");
-      }
       if (!formData.block || !formData.village) {
         throw new Error("Please select both block and village");
       }
-      if (!formData.fatherName || !formData.gender || !formData.dob) {
-        throw new Error("Please fill all captain details");
+      if (!formData.entryForm || !formData.sarpanchPerforma) {
+        throw new Error("Please upload both Entry Form and Sarpanch Performa");
       }
-      if (!formData.aadhaar || formData.aadhaar.length !== 12) {
-        throw new Error("Please provide a valid 12-digit Aadhaar number");
-      }
-      if (!formData.mobile || formData.mobile.length !== 10) {
-        throw new Error("Please provide a valid 10-digit mobile number");
+
+      // Validate all players
+      const invalidPlayers = formData.players.filter(
+        (player) =>
+          !player.playerName.trim() ||
+          !player.fatherName.trim() ||
+          !player.mobile.match(/^\d{10}$/)
+      );
+      if (invalidPlayers.length > 0) {
+        throw new Error(
+          "All players must have valid Name, Father's Name, and 10-digit Mobile"
+        );
       }
 
       // Upload files to Cloudinary
@@ -529,16 +529,11 @@ const Cricket = () => {
         teamName: formData.teamName,
         players: formData.players,
         numPlayers: formData.players.length,
-        captainFatherName: formData.fatherName,
-        captainGender: formData.gender,
-        captainDob: formData.dob,
         block: formData.block,
         village: formData.village,
         wardNo: formData.wardNo || "",
-        captainAadhaar: formData.aadhaar,
-        captainMobile: formData.mobile,
-        entryFormUrl: entryFormUrl,
-        sarpanchPerformaUrl: sarpanchPerformaUrl,
+        entryFormUrl,
+        sarpanchPerformaUrl,
         timestamp: new Date().toISOString(),
       };
 
@@ -556,25 +551,18 @@ const Cricket = () => {
       setFormData({
         teamName: "",
         players: [],
-        numPlayers: 0,
-        fatherName: "",
-        gender: "",
-        dob: "",
         block: "",
         village: "",
         wardNo: "",
-        aadhaar: "",
-        mobile: "",
         entryForm: null,
         sarpanchPerforma: null,
       });
-      setVillages([]);
       setNewPlayer({
         playerName: "",
         fatherName: "",
         mobile: "",
-        aadhaar: "",
       });
+      setVillages([]);
     } catch (err) {
       setError(err.message || "An error occurred during submission");
       console.error("Submission error:", err);
@@ -679,8 +667,6 @@ const Cricket = () => {
                     />
                   </div>
 
-               
-
                   {/* Players List */}
                   <div className="mb-4">
                     <label className="block text-gray-700 font-bold">
@@ -745,20 +731,7 @@ const Cricket = () => {
                           value={newPlayer.mobile}
                           onChange={handlePlayerInputChange}
                           className="w-full p-2 border rounded-lg bg-white text-black"
-                          placeholder="Enter Mobile Number"
-                        />
-                      </div>
-                      <div className="mb-2">
-                        <label className="block text-gray-700">
-                          Aadhaar Number
-                        </label>
-                        <input
-                          type="text"
-                          name="aadhaar"
-                          value={newPlayer.aadhaar}
-                          onChange={handlePlayerInputChange}
-                          className="w-full p-2 border rounded-lg bg-white text-black"
-                          placeholder="Enter Aadhaar Number"
+                          placeholder="Enter 10-digit Mobile Number"
                         />
                       </div>
                       <button
@@ -828,7 +801,7 @@ const Cricket = () => {
                   {/* File Uploads */}
                   <div className="mb-4">
                     <label className="block text-gray-700 font-medium">
-                      Entry Form (PDF, JPG, JPEG)
+                      Entry Form (PDF, JPG, JPEG, max 300KB)
                     </label>
                     <input
                       type="file"
@@ -842,7 +815,7 @@ const Cricket = () => {
 
                   <div className="mb-4">
                     <label className="block text-gray-700 font-medium">
-                      Sarpanch Performa (PDF, JPG, JPEG)
+                      Sarpanch Performa (PDF, JPG, JPEG, max 300KB)
                     </label>
                     <input
                       type="file"

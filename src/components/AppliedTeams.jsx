@@ -113,13 +113,13 @@ const AppliedTeams = () => {
       year: "numeric",
     });
 
-    const isTeamSport = ["cricketRegistrations", "volleyballRegistrations"].includes(tableFilter);
+    const isTeamSport = ["cricketRegistrations", "volleyballRegistrations", "tugofwarRegistrations"].includes(tableFilter);
     
     let exportData;
     const headerStyle = {
       font: { bold: true },
       fill: { patternType: "solid", fgColor: { rgb: "D3D3D3" } },
-      alignment: { horizontal: "center" }
+      alignment: { horizontal: "center" },
     };
 
     if (isTeamSport) {
@@ -128,39 +128,31 @@ const AppliedTeams = () => {
         "Players Count": reg.numPlayers || "N/A",
         "Players Details": reg.players?.map(p => 
           `${p.playerName} (Father: ${p.fatherName}, Mobile: ${p.mobile})`).join("\n") || "N/A",
-        "Captain Father": reg.captainFatherName || "N/A",
-        "Gender": reg.captainGender || "N/A",
-        "DOB": reg.captainDob || "N/A",
         "Block": reg.block || "N/A",
         "Village": reg.village || "N/A",
         "Ward No": reg.wardNo || "N/A",
-        "Aadhaar": reg.captainAadhaar || "N/A",
-        "Mobile": reg.captainMobile || "N/A",
         "Sarpanch Doc": reg.sarpanchPerformaUrl ? { f: `HYPERLINK("${reg.sarpanchPerformaUrl}", "View")` } : "N/A",
         "Entry Form": reg.entryFormUrl ? { f: `HYPERLINK("${reg.entryFormUrl}", "View")` } : "N/A",
-        "Registered At": reg.timestamp ? new Date(reg.timestamp).toLocaleString() : "N/A"
+        "Registered At": reg.timestamp ? new Date(reg.timestamp).toLocaleString() : "N/A",
       }));
     } else {
       exportData = filteredRegistrations.map((reg) => ({
         "Player Name": reg.playerName || "N/A",
         "Team Name": reg.teamName || "N/A",
         ...(tableFilter === "wrestlingRegistrations" && { "Weight (kg)": reg.weight || "N/A" }),
-        ...(tableFilter === "tugofwarRegistrations" && { "Players Count": reg.numPlayers || "N/A" }),
         ...(tableFilter === "raceRegistrations" && {
           "Event Type": reg.eventType || "N/A",
-          "Event Category": reg.eventCategory || "N/A"
+          "Event Category": reg.eventCategory || "N/A",
         }),
         "Father's Name": reg.fatherName || "N/A",
         "Gender": reg.gender || "N/A",
-        "DOB": reg.dob || "N/A",
+        "Mobile": reg.mobile || "N/A",
         "Block": reg.block || "N/A",
         "Village": reg.village || "N/A",
         "Ward No": reg.wardNo || "N/A",
-        "Aadhaar": reg.aadhaar || "N/A",
-        "Mobile": reg.mobile || "N/A",
         "Sarpanch Doc": reg.sarpanchPerformaUrl ? { f: `HYPERLINK("${reg.sarpanchPerformaUrl}", "View")` } : "N/A",
         "Entry Form": reg.entryFormUrl ? { f: `HYPERLINK("${reg.entryFormUrl}", "View")` } : "N/A",
-        "Registered At": reg.timestamp ? new Date(reg.timestamp).toLocaleString() : "N/A"
+        "Registered At": reg.timestamp ? new Date(reg.timestamp).toLocaleString() : "N/A",
       }));
     }
 
@@ -169,30 +161,41 @@ const AppliedTeams = () => {
     
     // Add header styling
     const range = XLSX.utils.decode_range(worksheet["!ref"]);
-    for(let C = range.s.c; C <= range.e.c; ++C) {
-      const headerCell = XLSX.utils.encode_cell({r: range.s.r, c: C});
-      if(worksheet[headerCell]) {
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const headerCell = XLSX.utils.encode_cell({ r: range.s.r, c: C });
+      if (worksheet[headerCell]) {
         worksheet[headerCell].s = headerStyle;
       }
     }
 
     // Set column widths
-    worksheet["!cols"] = isTeamSport ? [
-      { wch: 20 }, { wch: 15 }, { wch: 40 },
-      { wch: 20 }, { wch: 10 }, { wch: 15 },
-      { wch: 15 }, { wch: 20 }, { wch: 10 },
-      { wch: 25 }, { wch: 15 }, { wch: 20 },
-      { wch: 20 }, { wch: 25 }
-    ] : [
-      { wch: 20 }, { wch: 20 }, 
-      ...(tableFilter === "wrestlingRegistrations" ? [{ wch: 15 }] : []),
-      ...(tableFilter === "tugofwarRegistrations" ? [{ wch: 15 }] : []),
-      ...(tableFilter === "raceRegistrations" ? [{ wch: 20 }, { wch: 20 }] : []),
-      { wch: 20 }, { wch: 10 }, { wch: 15 },
-      { wch: 15 }, { wch: 20 }, { wch: 10 },
-      { wch: 25 }, { wch: 15 }, { wch: 20 },
-      { wch: 20 }, { wch: 25 }
-    ];
+    worksheet["!cols"] = isTeamSport
+      ? [
+          { wch: 20 }, // Team Name
+          { wch: 15 }, // Players Count
+          { wch: 40 }, // Players Details
+          { wch: 15 }, // Block
+          { wch: 20 }, // Village
+          { wch: 10 }, // Ward No
+          { wch: 20 }, // Sarpanch Doc
+          { wch: 20 }, // Entry Form
+          { wch: 25 }, // Registered At
+        ]
+      : [
+          { wch: 20 }, // Player Name
+          { wch: 20 }, // Team Name
+          ...(tableFilter === "wrestlingRegistrations" ? [{ wch: 15 }] : []), // Weight
+          ...(tableFilter === "raceRegistrations" ? [{ wch: 20 }, { wch: 20 }] : []), // Event Type, Category
+          { wch: 20 }, // Father's Name
+          { wch: 10 }, // Gender
+          { wch: 15 }, // Mobile
+          { wch: 15 }, // Block
+          { wch: 20 }, // Village
+          { wch: 10 }, // Ward No
+          { wch: 20 }, // Sarpanch Doc
+          { wch: 20 }, // Entry Form
+          { wch: 25 }, // Registered At
+        ];
 
     XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
     XLSX.writeFile(workbook, `${tableFilter}_report_${downloadDate}.xlsx`);
@@ -266,7 +269,7 @@ const AppliedTeams = () => {
           <table className="min-w-full text-sm">
             <thead className="bg-gray-800 text-white">
               <tr>
-                {["cricketRegistrations", "volleyballRegistrations"].includes(tableFilter) ? (
+                {["cricketRegistrations", "volleyballRegistrations", "tugofwarRegistrations"].includes(tableFilter) ? (
                   <>
                     <th className="p-3 text-left">Team</th>
                     <th className="p-3 text-left">Players</th>
@@ -278,9 +281,6 @@ const AppliedTeams = () => {
                 {tableFilter === "wrestlingRegistrations" && (
                   <th className="p-3 text-left">Weight</th>
                 )}
-                {tableFilter === "tugofwarRegistrations" && (
-                  <th className="p-3 text-left">Players</th>
-                )}
                 {tableFilter === "raceRegistrations" && (
                   <>
                     <th className="p-3 text-left">Event Type</th>
@@ -288,13 +288,13 @@ const AppliedTeams = () => {
                   </>
                 )}
                 <th className="p-3 text-left">Father</th>
-                <th className="p-3 text-left">Gender</th>
-                <th className="p-3 text-left">DOB</th>
+                {tableFilter !== "cricketRegistrations" && tableFilter !== "volleyballRegistrations" && tableFilter !== "tugofwarRegistrations" && (
+                  <th className="p-3 text-left">Gender</th>
+                )}
+                <th className="p-3 text-left">Mobile</th>
                 <th className="p-3 text-left">Block</th>
                 <th className="p-3 text-left">Village</th>
                 <th className="p-3 text-left">Ward</th>
-                <th className="p-3 text-left">Aadhaar</th>
-                <th className="p-3 text-left">Mobile</th>
                 <th className="p-3 text-left">Sarpanch Doc</th>
                 <th className="p-3 text-left">Entry Form</th>
                 <th className="p-3 text-left">Registered</th>
@@ -304,7 +304,7 @@ const AppliedTeams = () => {
             <tbody>
               {filteredRegistrations.map((reg) => (
                 <tr key={reg.id} className="border-b hover:bg-gray-50">
-                  {["cricketRegistrations", "volleyballRegistrations"].includes(tableFilter) ? (
+                  {["cricketRegistrations", "volleyballRegistrations", "tugofwarRegistrations"].includes(tableFilter) ? (
                     <>
                       <td className="p-3">{reg.teamName || "N/A"}</td>
                       <td className="p-3">{reg.numPlayers || "N/A"}</td>
@@ -324,23 +324,20 @@ const AppliedTeams = () => {
                   {tableFilter === "wrestlingRegistrations" && (
                     <td className="p-3">{reg.weight ? `${reg.weight} kg` : "N/A"}</td>
                   )}
-                  {tableFilter === "tugofwarRegistrations" && (
-                    <td className="p-3">{reg.numPlayers || "N/A"}</td>
-                  )}
                   {tableFilter === "raceRegistrations" && (
                     <>
                       <td className="p-3">{reg.eventType || "N/A"}</td>
                       <td className="p-3">{reg.eventCategory || "N/A"}</td>
                     </>
                   )}
-                  <td className="p-3">{reg.captainFatherName || reg.fatherName || "N/A"}</td>
-                  <td className="p-3">{reg.captainGender || reg.gender || "N/A"}</td>
-                  <td className="p-3">{reg.captainDob || reg.dob || "N/A"}</td>
+                  <td className="p-3">{reg.fatherName || (reg.players && reg.players[0]?.fatherName) || "N/A"}</td>
+                  {tableFilter !== "cricketRegistrations" && tableFilter !== "volleyballRegistrations" && tableFilter !== "tugofwarRegistrations" && (
+                    <td className="p-3">{reg.gender || "N/A"}</td>
+                  )}
+                  <td className="p-3">{reg.mobile || (reg.players && reg.players[0]?.mobile) || "N/A"}</td>
                   <td className="p-3">{reg.block || "N/A"}</td>
                   <td className="p-3">{reg.village || "N/A"}</td>
                   <td className="p-3">{reg.wardNo || "N/A"}</td>
-                  <td className="p-3">{reg.captainAadhaar || reg.aadhaar || "N/A"}</td>
-                  <td className="p-3">{reg.captainMobile || reg.mobile || "N/A"}</td>
                   <td className="p-3">
                     {reg.sarpanchPerformaUrl ? (
                       <a
@@ -365,7 +362,7 @@ const AppliedTeams = () => {
                       </a>
                     ) : "N/A"}
                   </td>
-                  <td className="p-3">{new Date(reg.timestamp).toLocaleString()}</td>
+                  <td className="p-3">{reg.timestamp ? new Date(reg.timestamp).toLocaleString() : "N/A"}</td>
                   <td className="p-3">
                     <button
                       onClick={() => handleDelete(reg.id, reg.tableName)}
