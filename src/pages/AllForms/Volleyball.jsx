@@ -674,8 +674,6 @@ const Volleyball = () => {
                             <span>
                               {index + 1}. {player.playerName} (Father:{" "}
                               {player.fatherName}) (Mobile: {player.mobile})
-                              (Aadhaar:
-                              {player.aadhaar})
                             </span>
                             <button
                               type="button"
@@ -726,19 +724,6 @@ const Volleyball = () => {
                           onChange={handlePlayerInputChange}
                           className="w-full p-2 border rounded-lg bg-white text-black"
                           placeholder="Enter Mobile Number"
-                        />
-                      </div>
-                      <div className="mb-2">
-                        <label className="block text-gray-700">
-                          Aadhaar Number
-                        </label>
-                        <input
-                          type="text"
-                          name="aadhaar"
-                          value={newPlayer.aadhaar}
-                          onChange={handlePlayerInputChange}
-                          className="w-full p-2 border rounded-lg bg-white text-black"
-                          placeholder="Enter Aadhaar Number"
                         />
                       </div>
                       <button

@@ -648,18 +648,6 @@ const Wrestling = () => {
               </div>
 
               <div className="mb-4">
-                <label className="block text-gray-700">Date of Birth</label>
-                <input
-                  type="date"
-                  name="dob"
-                  value={formData.dob}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg bg-white text-black"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
                 <label className="block text-gray-700">Block</label>
                 <select
                   name="block"
@@ -710,24 +698,7 @@ const Wrestling = () => {
               </div>
 
               <div className="mb-4">
-                <label className="block text-gray-700">
-                  Captain Aadhaar Number
-                </label>
-                <input
-                  type="text"
-                  name="aadhaar"
-                  value={formData.aadhaar}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg bg-white text-black"
-                  placeholder="Enter Aadhaar Number"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-gray-700">
-                  Captain Mobile Number
-                </label>
+                <label className="block text-gray-700">Mobile Number</label>
                 <input
                   type="tel"
                   name="mobile"
