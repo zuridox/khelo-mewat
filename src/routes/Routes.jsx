@@ -38,7 +38,6 @@ import Volleyball from "../pages/AllForms/Volleyball";
 import Race from "../pages/AllForms/Race";
 import Tugofwars from "../pages/AllForms/Tugofwars";
 import PolicyPage from "../pages/PrivacyPolicy/PolicyPage";
-import Bug from "../pages/Bug";
 
 
 
@@ -49,16 +48,12 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       {
-        path: "/bug",
+        path: "/",
         element: <Home />,
       },
       {
         path: "games",
         element: <CoursesPage />,
-      },
-      {
-        path: "/",
-        element: <Bug />,
       },
       {
         path: "admincontact",
