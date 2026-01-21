@@ -142,17 +142,7 @@ const Footer = () => {
         </FadeInAnimation>
       </footer>
       <div className="footer-center p-6 bg-[#39A935] border-t border-[#E87722] text-white">
-        <p>
-          Copyright © {year} - All rights reserved. Developed by{" "}
-          <a
-            href="https://zuridox.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#e78f4c] hover:underline"
-          >
-            <b>Zuridox</b>
-          </a>
-        </p>
+        <p>Copyright © {year} - All rights reserved.</p>
       </div>
     </div>
   );
