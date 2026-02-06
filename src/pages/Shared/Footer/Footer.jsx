@@ -142,7 +142,17 @@ const Footer = () => {
         </FadeInAnimation>
       </footer>
       <div className="footer-center p-6 bg-[#39A935] border-t border-[#E87722] text-white">
-        <p>Copyright © {year} - All rights reserved.</p>
+        <p>
+          Copyright © {year} - All rights reserved. | Created with ❤️ by
+          <a
+            href="https://digimaxia.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-1 underline hover:text-[#E87722]"
+          >
+            Digimaxia
+          </a>
+        </p>
       </div>
     </div>
   );
